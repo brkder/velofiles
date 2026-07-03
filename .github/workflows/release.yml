@@ -1,0 +1,66 @@
+# Builds Windows installers (MSI + NSIS) and attaches them to a GitHub
+# Release automatically whenever a version tag (v1.2.3) is pushed.
+#
+#   git tag v0.1.0
+#   git push origin v0.1.0
+#
+# The release is created as a DRAFT: review it under Releases, edit the
+# notes, then click "Publish".
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build and attach installers to a draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "VeloFiles ${{ github.ref_name }}"
+          releaseBody: |
+            ## VeloFiles ${{ github.ref_name }}
+
+            ⚡ A blazing-fast, open-source, multilingual file explorer for Windows.
+
+            ### Installation
+            - **`.msi`** — standard Windows installer (recommended)
+            - **`-setup.exe`** — NSIS installer (smaller download)
+
+            Requires Windows 10/11 (WebView2 is preinstalled on both).
+          releaseDraft: true
+          prerelease: false
