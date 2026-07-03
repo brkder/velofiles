@@ -55,7 +55,7 @@ function makeTab(path: string): Tab {
 const firstLeft = makeTab("C:\\");
 const firstRight = makeTab("C:\\");
 
-export const useTabs = create<TabsState>()((set, get) => ({
+export const useTabs = create<TabsState>()((set) => ({
   tabs: { left: [firstLeft], right: [firstRight] },
   activeTabId: { left: firstLeft.id, right: firstRight.id },
   activePane: "left",
